@@ -1,0 +1,11 @@
+# Normaliza fin de línea: LF en el repo.
+* text=auto eol=lf
+
+# Scripts específicos de plataforma
+*.bat text eol=crlf
+gradlew text eol=lf
+
+# Binarios (no tocar)
+*.jar binary
+*.png binary
+*.keystore binary

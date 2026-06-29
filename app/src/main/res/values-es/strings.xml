@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Coco</string>
+    <string name="header_subtitle">deslizá hacia abajo para ver tus notas</string>
+    <string name="pull_tab_write">deslizá arriba para escribir</string>
+    <string name="hint_write_note">Escribí tu nota…</string>
+    <string name="note_saved">¡Nota guardada!</string>
+    <string name="your_notes">🌴 Tus notas</string>
+    <string name="no_notes_title">Todavía no hay notas</string>
+    <string name="no_notes_subtitle">Deslizá hacia arriba y escribí la primera.</string>
+    <string name="no_results_title">Sin resultados</string>
+    <string name="no_results_subtitle">Probá con otra búsqueda o limpiá los filtros.</string>
+    <string name="pinned">Fijada</string>
+    <string name="settings">Ajustes</string>
+    <string name="start_in_history">Empezar en el historial</string>
+    <string name="start_in_history_desc">Al abrir Coco, mostrar tus notas. Deslizá hacia arriba para escribir una nueva.</string>
+    <string name="fast_mode">Sin animaciones</string>
+    <string name="fast_mode_desc">Desactiva animaciones de apertura y UI para máxima velocidad.</string>
+    <string name="done">Listo</string>
+    <string name="credits_made_by">made by @ezeparadelo with 🤎</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title">Bienvenido a Coco</string>
+    <string name="onboarding_step1_title">Listo para escribir</string>
+    <string name="onboarding_step1_desc">El teclado se abre al instante. Solo escribí.</string>
+    <string name="onboarding_step2_title">Deslizá para navegar</string>
+    <string name="onboarding_step2_desc">Arriba para escribir, abajo para ver tus notas.</string>
+    <string name="onboarding_step3_title">Organizá fácil</string>
+    <string name="onboarding_step3_desc">Mantené presionado para fijar, deslizá para borrar.</string>
+    <string name="got_it">A escribir</string>
+
+    <!-- Relative time -->
+    <string name="time_now">ahora</string>
+    <string name="time_min_ago">hace %d min</string>
+    <string name="time_hours_ago">hace %d h</string>
+
+    <!-- v0.6.0 Features -->
+    <string name="search_hint">Buscar notas…</string>
+    <string name="view_archived">📦 Ver notas archivadas (%d)</string>
+    <string name="archived_title">Notas archivadas</string>
+    <string name="back_to_active">← Volver a notas activas</string>
+    <string name="edit_note">Editar nota</string>
+    <string name="editing_mode_hint">Editando nota…</string>
+    <string name="remind_1h">En 1h</string>
+    <string name="remind_tonight">Esta noche 20h</string>
+    <string name="remind_tomorrow">Mañana 9h</string>
+    <string name="reminder_set">¡Recordatorio programado!</string>
+    <string name="remind_custom">Elegir hora…</string>
+    <string name="remind_cancel">🔕 Cancelar recordatorio</string>
+    <string name="reminder_cancelled">Recordatorio cancelado</string>
+    <string name="permission_required">Se requieren permisos para enviar recordatorios</string>
+    <string name="backup_section">Copia de seguridad</string>
+    <string name="export_backup">Exportar notas</string>
+    <string name="import_backup">Importar copia</string>
+    <string name="backup_exported">¡Copia exportada!</string>
+    <string name="backup_imported">¡Copia importada con éxito!</string>
+    <string name="note_deleted">🗑️ Nota borrada</string>
+    <string name="undo">Deshacer</string>
+
+    <!-- v0.9.8 Features -->
+    <string name="trash_title">Papelera</string>
+    <string name="trash_empty">Papelera vacía</string>
+    <string name="trash_subtitle">Las notas eliminadas aparecerán aquí y se borrarán en 30 días.</string>
+    <string name="no_archived_subtitle">No tienes notas archivadas.</string>
+    <string name="restore_note">♻️ Restaurar</string>
+    <string name="delete_permanently">Eliminar</string>
+    <string name="empty_trash_btn">Vaciar papelera</string>
+    <string name="empty_trash_confirm_title">¿Vaciar papelera?</string>
+    <string name="empty_trash_confirm_desc">Se eliminarán todas las notas en la papelera de forma permanente. Esta acción no se puede deshacer.</string>
+    <string name="enter_to_submit">Enter guarda la nota</string>
+    <string name="enter_to_submit_desc">Si se desactiva, presionar Enter agregará un salto de línea.</string>
+    <string name="copied_pill">Copiado</string>
+    <string name="delete_note_confirm_title">¿Eliminar nota permanentemente?</string>
+    <string name="delete_note_confirm_desc">Esta nota se eliminará de forma permanente. Esta acción no se puede deshacer.</string>
+    <string name="import_confirm_title">¿Reemplazar notas actuales?</string>
+    <string name="import_confirm_desc">¿Estás seguro de que quieres reemplazar tus notas actuales? Se perderán %d notas de forma permanente y se cargarán las del respaldo.</string>
+    <string name="replace">Reemplazar</string>
+</resources>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Coco</string>
+    <string name="header_subtitle">swipe down to see your notes</string>
+    <string name="pull_tab_write">swipe up to write</string>
+    <string name="hint_write_note">Write your note…</string>
+    <string name="note_saved">Note saved!</string>
+    <string name="your_notes">🌴 Your notes</string>
+    <string name="no_notes_title">No notes yet</string>
+    <string name="no_notes_subtitle">Swipe up and write your first one.</string>
+    <string name="no_results_title">No results found</string>
+    <string name="no_results_subtitle">Try a different search term or clear filters.</string>
+    <string name="pinned">Pinned</string>
+    <string name="settings">Settings</string>
+    <string name="start_in_history">Start in history</string>
+    <string name="start_in_history_desc">Show your notes when opening Coco. Swipe up to write a new one.</string>
+    <string name="fast_mode">No animations</string>
+    <string name="fast_mode_desc">Disable opening and UI animations for instant speed.</string>
+    <string name="done">Done</string>
+    <string name="credits_made_by">made by @ezeparadelo with 🤎</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title">Welcome to Coco</string>
+    <string name="onboarding_step1_title">Ready to type</string>
+    <string name="onboarding_step1_desc">Keyboard opens instantly. Just write.</string>
+    <string name="onboarding_step2_title">Swipe to navigate</string>
+    <string name="onboarding_step2_desc">Up to write, down to see your notes.</string>
+    <string name="onboarding_step3_title">Organize easily</string>
+    <string name="onboarding_step3_desc">Long-press to pin, swipe to delete.</string>
+    <string name="got_it">Let\'s write</string>
+
+    <!-- Relative time -->
+    <string name="time_now">just now</string>
+    <string name="time_min_ago">%d min ago</string>
+    <string name="time_hours_ago">%d h ago</string>
+
+    <!-- v0.6.0 Features -->
+    <string name="search_hint">Search notes…</string>
+    <string name="view_archived">📦 View archived notes (%d)</string>
+    <string name="archived_title">Archived Notes</string>
+    <string name="back_to_active">← Back to active notes</string>
+    <string name="edit_note">Edit note</string>
+    <string name="editing_mode_hint">Editing note…</string>
+    <string name="remind_1h">In 1h</string>
+    <string name="remind_tonight">Tonight 8pm</string>
+    <string name="remind_tomorrow">Tomorrow 9am</string>
+    <string name="reminder_set">Reminder scheduled!</string>
+    <string name="remind_custom">Custom…</string>
+    <string name="remind_cancel">🔕 Cancel reminder</string>
+    <string name="reminder_cancelled">Reminder cancelled</string>
+    <string name="permission_required">Notification permission required for reminders</string>
+    <string name="backup_section">Backup &amp; Restore</string>
+    <string name="export_backup">Export notes</string>
+    <string name="import_backup">Import backup</string>
+    <string name="backup_exported">Backup exported!</string>
+    <string name="backup_imported">Backup imported successfully!</string>
+    <string name="note_deleted">🗑️ Note deleted</string>
+    <string name="undo">Undo</string>
+
+    <!-- v0.9.8 Features -->
+    <string name="trash_title">Trash</string>
+    <string name="trash_empty">Trash is empty</string>
+    <string name="trash_subtitle">Deleted notes will appear here and be removed after 30 days.</string>
+    <string name="no_archived_subtitle">You have no archived notes.</string>
+    <string name="restore_note">♻️ Restore</string>
+    <string name="delete_permanently">Delete</string>
+    <string name="empty_trash_btn">Empty trash</string>
+    <string name="empty_trash_confirm_title">Empty trash?</string>
+    <string name="empty_trash_confirm_desc">All deleted notes will be permanently removed. This action cannot be undone.</string>
+    <string name="enter_to_submit">Enter key saves note</string>
+    <string name="enter_to_submit_desc">If disabled, pressing Enter will insert a new line.</string>
+    <string name="copied_pill">Copied</string>
+    <string name="delete_note_confirm_title">Delete note permanently?</string>
+    <string name="delete_note_confirm_desc">This note will be permanently removed. This action cannot be undone.</string>
+    <string name="import_confirm_title">Replace current notes?</string>
+    <string name="import_confirm_desc">Are you sure you want to replace your current notes? %d notes will be permanently lost and replaced by the backup.</string>
+    <string name="replace">Replace</string>
+</resources>

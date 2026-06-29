@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Cuerpo del coco (crema) -->
+    <path
+        android:fillColor="#FFFBF4"
+        android:pathData="M28,54 a26,26 0 1,0 52,0 a26,26 0 1,0 -52,0 z" />
+    <!-- Los tres "ojos" del coco (marrón oscuro) -->
+    <path
+        android:fillColor="#3A2A1D"
+        android:pathData="M42.5,48 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 z" />
+    <path
+        android:fillColor="#3A2A1D"
+        android:pathData="M58.5,48 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 z" />
+    <path
+        android:fillColor="#3A2A1D"
+        android:pathData="M50,62 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 z" />
+</vector>

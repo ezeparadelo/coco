@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Tema base de la app (post-splash). Sin ActionBar; barras transparentes para edge-to-edge. -->
+    <style name="Theme.Coco" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/coco_cream</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <!-- Splash inmediato: se cierra apenas la Activity está lista (setKeepOnScreenCondition { false }). -->
+    <style name="Theme.Coco.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/coco_cream</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_circle</item>
+        <item name="postSplashScreenTheme">@style/Theme.Coco</item>
+    </style>
+
+</resources>
