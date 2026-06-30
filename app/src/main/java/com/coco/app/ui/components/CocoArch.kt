@@ -75,11 +75,14 @@ fun CocoArch(
                     return amp + dome + ripple
                 }
 
-                val steps = 80
+                val steps = 48
                 // Borde superior (oleaje) como polilínea reutilizable.
                 rimPath.reset()
                 rimPath.moveTo(0f, topY(0f))
-                for (i in 1..steps) rimPath.lineTo(w * i / steps, topY(w * i / steps))
+                for (i in 1..steps) {
+                    val x = w * i / steps
+                    rimPath.lineTo(x, topY(x))
+                }
 
                 // Sombra suave sobre la crema: la mitad superior del trazo queda visible y
                 // despega el arco del fondo.

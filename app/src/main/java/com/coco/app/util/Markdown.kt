@@ -59,6 +59,11 @@ private fun AnnotatedString.Builder.appendInline(text: String) {
     if (last < text.length) append(text.substring(last))
 }
 
+private val boldRegex = Regex("""\*\*(.+?)\*\*""")
+private val italicAsteriskRegex = Regex("""(?<!\*)\*([^*]+?)\*(?!\*)""")
+private val italicUnderscoreRegex = Regex("""_([^_]+?)_""")
+private val codeRegex = Regex("""`([^`]+?)`""")
+
 /**
  * VisualTransformation que aplica estilos Markdown al texto plano durante la edición,
  * manteniendo visibles los símbolos de marcado (asteriscos, guiones, etc.) sin alterar
@@ -71,25 +76,21 @@ class MarkdownVisualTransformation : VisualTransformation {
             append(raw)
             
             // 1. Bold: **text**
-            val boldRegex = Regex("""\*\*(.+?)\*\*""")
             boldRegex.findAll(raw).forEach { match ->
                 addStyle(SpanStyle(fontWeight = FontWeight.Bold), match.range.first, match.range.last + 1)
             }
             
             // 2. Italic: *text* (evitando doble asterisco)
-            val italicAsteriskRegex = Regex("""(?<!\*)\*([^*]+?)\*(?!\*)""")
             italicAsteriskRegex.findAll(raw).forEach { match ->
                 addStyle(SpanStyle(fontStyle = FontStyle.Italic), match.range.first, match.range.last + 1)
             }
             
             // 3. Italic: _text_
-            val italicUnderscoreRegex = Regex("""_([^_]+?)_""")
             italicUnderscoreRegex.findAll(raw).forEach { match ->
                 addStyle(SpanStyle(fontStyle = FontStyle.Italic), match.range.first, match.range.last + 1)
             }
             
             // 4. Code: `text`
-            val codeRegex = Regex("""`([^`]+?)`""")
             codeRegex.findAll(raw).forEach { match ->
                 addStyle(SpanStyle(fontFamily = FontFamily.Monospace), match.range.first, match.range.last + 1)
             }
