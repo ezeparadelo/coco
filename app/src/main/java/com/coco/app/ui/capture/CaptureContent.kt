@@ -318,9 +318,21 @@ fun CaptureContent(
             }
         }
 
+        val minContentHeightPx = (140 * density)
         CocoArch(
             modifier = Modifier
                 .fillMaxWidth()
+                .layout { measurable, constraints ->
+                    val h = (heightPx - layoutOffsetProvider())
+                        .coerceAtLeast(minContentHeightPx)
+                        .roundToInt()
+                    val placeable = measurable.measure(
+                        constraints.copy(minHeight = h, maxHeight = h)
+                    )
+                    layout(placeable.width, placeable.height) {
+                        placeable.place(0, 0)
+                    }
+                }
                 .graphicsLayer { translationY = archOffsetProvider() }
                 .then(dragModifier)
                 .pointerInput(isActive) {
@@ -330,25 +342,7 @@ fun CaptureContent(
                 },
             fastMode = fastMode,
         ) {
-            // The visible height of the arch content tracks the drag offset. We resolve it in
-            // the measure phase via Modifier.layout (reading layoutOffsetProvider there) so the
-            // height change re-measures only this subtree instead of recomposing the screen.
-            val minContentHeightPx = (140 * density)
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .layout { measurable, constraints ->
-                        val h = (heightPx - layoutOffsetProvider())
-                            .coerceAtLeast(minContentHeightPx)
-                            .roundToInt()
-                        val placeable = measurable.measure(
-                            constraints.copy(minHeight = h, maxHeight = h)
-                        )
-                        layout(placeable.width, placeable.height) {
-                            placeable.place(0, 0)
-                        }
-                    }
-            ) {
+            Box(Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
