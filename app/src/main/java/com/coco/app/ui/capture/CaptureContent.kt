@@ -43,7 +43,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,7 +51,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -90,7 +88,6 @@ import com.coco.app.util.MarkdownVisualTransformation
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 @Composable
 fun CaptureContent(
@@ -231,11 +228,6 @@ fun CaptureContent(
         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
     }
 
-    // The drag offset changes every frame. Reading it directly in the composition phase
-    // would force this whole composable to recompose (and re-measure) on each frame, which
-    // is what made the arch feel laggy. Instead we derive every offset-driven value from
-    // pure helper lambdas and read them only inside deferred phases (layout / draw via
-    // graphicsLayer), so dragging no longer triggers recomposition.
     val historyProgressOf: (Float) -> Float = { offset ->
         if (historyOffsetPx > normalOffsetPx) {
             ((offset - normalOffsetPx) / (historyOffsetPx - normalOffsetPx)).coerceIn(0f, 1f)
@@ -253,17 +245,7 @@ fun CaptureContent(
         (1f - (historyProgressOf(offset) * 2.5f)).coerceIn(0f, 1f)
     }
 
-    // Threshold-based booleans bound recomposition to the moments the gate actually flips,
-    // instead of every frame. `derivedStateOf` re-reads the offset state in a snapshot and
-    // only notifies readers when the boolean result changes.
-    val showUpperLayers by remember {
-        derivedStateOf { historyProgressOf(archOffsetProvider()) < 0.98f }
-    }
-    val canSave by remember {
-        derivedStateOf {
-            textFieldValue.text.isNotBlank() && writeContentAlphaOf(archOffsetProvider()) > 0.1f
-        }
-    }
+    val showUpperLayers = isActive && (historyProgressOf(archOffsetProvider()) < 0.4f)
 
     Box(modifier.fillMaxSize()) {
         if (showUpperLayers) {
@@ -318,21 +300,9 @@ fun CaptureContent(
             }
         }
 
-        val minContentHeightPx = (140 * density)
         CocoArch(
             modifier = Modifier
                 .fillMaxWidth()
-                .layout { measurable, constraints ->
-                    val h = (heightPx - layoutOffsetProvider())
-                        .coerceAtLeast(minContentHeightPx)
-                        .roundToInt()
-                    val placeable = measurable.measure(
-                        constraints.copy(minHeight = h, maxHeight = h)
-                    )
-                    layout(placeable.width, placeable.height) {
-                        placeable.place(0, 0)
-                    }
-                }
                 .graphicsLayer { translationY = archOffsetProvider() }
                 .then(dragModifier)
                 .pointerInput(isActive) {
@@ -342,7 +312,10 @@ fun CaptureContent(
                 },
             fastMode = fastMode,
         ) {
-            Box(Modifier.fillMaxSize()) {
+            val visibleHeight = with(LocalDensity.current) {
+                (heightPx - layoutOffsetProvider()).toDp().coerceAtLeast(140.dp)
+            }
+            Box(Modifier.fillMaxWidth().height(visibleHeight)) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -520,8 +493,9 @@ fun CaptureContent(
 
                         Spacer(Modifier.weight(1f))
 
+                        val currentWriteAlpha = writeContentAlphaOf(archOffsetProvider())
                         SaveButton(
-                            enabled = canSave,
+                            enabled = textFieldValue.text.isNotBlank() && currentWriteAlpha > 0.1f,
                             fastMode = fastMode,
                             modifier = Modifier.graphicsLayer {
                                 val a = writeContentAlphaOf(archOffsetProvider()).coerceAtLeast(0.01f)
