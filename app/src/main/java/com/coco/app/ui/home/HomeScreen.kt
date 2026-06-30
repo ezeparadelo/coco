@@ -335,8 +335,8 @@ fun HomeScreen(viewModel: HomeViewModel, onComposeReady: () -> Unit = {}) {
 
         CaptureContent(
             isActive = isCapture,
-            archOffsetPx = effectiveOffsetY,
-            layoutOffsetPx = offsetY,
+            archOffsetProvider = { effectiveOffsetY },
+            layoutOffsetProvider = { offsetY },
             normalOffsetPx = normalOffset,
             historyOffsetPx = historyOffset,
             expandedOffsetPx = expandedOffset,
