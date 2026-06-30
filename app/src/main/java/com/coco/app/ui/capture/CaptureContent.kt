@@ -43,6 +43,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +52,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -88,12 +90,13 @@ import com.coco.app.util.MarkdownVisualTransformation
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @Composable
 fun CaptureContent(
     isActive: Boolean,
-    archOffsetPx: Float,
-    layoutOffsetPx: Float = archOffsetPx,
+    archOffsetProvider: () -> Float,
+    layoutOffsetProvider: () -> Float = archOffsetProvider,
     normalOffsetPx: Float,
     historyOffsetPx: Float,
     expandedOffsetPx: Float,
@@ -228,25 +231,50 @@ fun CaptureContent(
         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
     }
 
-    val historyProgress = if (historyOffsetPx > normalOffsetPx) {
-        ((archOffsetPx - normalOffsetPx) / (historyOffsetPx - normalOffsetPx)).coerceIn(0f, 1f)
-    } else 0f
-    val expandProgress = if (normalOffsetPx > expandedOffsetPx) {
-        ((normalOffsetPx - archOffsetPx) / (normalOffsetPx - expandedOffsetPx)).coerceIn(0f, 1f)
-    } else 0f
+    // The drag offset changes every frame. Reading it directly in the composition phase
+    // would force this whole composable to recompose (and re-measure) on each frame, which
+    // is what made the arch feel laggy. Instead we derive every offset-driven value from
+    // pure helper lambdas and read them only inside deferred phases (layout / draw via
+    // graphicsLayer), so dragging no longer triggers recomposition.
+    val historyProgressOf: (Float) -> Float = { offset ->
+        if (historyOffsetPx > normalOffsetPx) {
+            ((offset - normalOffsetPx) / (historyOffsetPx - normalOffsetPx)).coerceIn(0f, 1f)
+        } else 0f
+    }
+    val expandProgressOf: (Float) -> Float = { offset ->
+        if (normalOffsetPx > expandedOffsetPx) {
+            ((normalOffsetPx - offset) / (normalOffsetPx - expandedOffsetPx)).coerceIn(0f, 1f)
+        } else 0f
+    }
+    val pullTabAlphaOf: (Float) -> Float = { offset ->
+        ((historyProgressOf(offset) - 0.2f) * 2f).coerceIn(0f, 1f)
+    }
+    val writeContentAlphaOf: (Float) -> Float = { offset ->
+        (1f - (historyProgressOf(offset) * 2.5f)).coerceIn(0f, 1f)
+    }
 
-    val pullTabAlpha = ((historyProgress - 0.2f) * 2f).coerceIn(0f, 1f)
-    val writeContentAlpha = (1f - (historyProgress * 2.5f)).coerceIn(0f, 1f)
+    // Threshold-based booleans bound recomposition to the moments the gate actually flips,
+    // instead of every frame. `derivedStateOf` re-reads the offset state in a snapshot and
+    // only notifies readers when the boolean result changes.
+    val showUpperLayers by remember {
+        derivedStateOf { historyProgressOf(archOffsetProvider()) < 0.98f }
+    }
+    val canSave by remember {
+        derivedStateOf {
+            textFieldValue.text.isNotBlank() && writeContentAlphaOf(archOffsetProvider()) > 0.1f
+        }
+    }
 
     Box(modifier.fillMaxSize()) {
-        if (historyProgress < 0.98f) {
+        if (showUpperLayers) {
             Box(
                 Modifier
                     .fillMaxWidth()
                     .height(with(LocalDensity.current) { heightPx.toDp() })
                     .graphicsLayer {
-                        alpha = 1f - historyProgress
-                        translationY = archOffsetPx - heightPx + (30 * density)
+                        val offset = archOffsetProvider()
+                        alpha = 1f - historyProgressOf(offset)
+                        translationY = offset - heightPx + (30 * density)
                     }
                     .background(CocoCream)
             )
@@ -258,8 +286,11 @@ fun CaptureContent(
                     .statusBarsPadding()
                     .padding(24.dp)
                     .graphicsLayer {
-                        alpha = (1f - (historyProgress * 2.5f) - (expandProgress * 1.5f)).coerceIn(0f, 1f)
-                        translationY = -expandProgress * 50f
+                        val offset = archOffsetProvider()
+                        val hp = historyProgressOf(offset)
+                        val ep = expandProgressOf(offset)
+                        alpha = (1f - (hp * 2.5f) - (ep * 1.5f)).coerceIn(0f, 1f)
+                        translationY = -ep * 50f
                     }
                     .then(dragModifier),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -290,7 +321,7 @@ fun CaptureContent(
         CocoArch(
             modifier = Modifier
                 .fillMaxWidth()
-                .graphicsLayer { translationY = archOffsetPx }
+                .graphicsLayer { translationY = archOffsetProvider() }
                 .then(dragModifier)
                 .pointerInput(isActive) {
                     if (!isActive) {
@@ -299,15 +330,30 @@ fun CaptureContent(
                 },
             fastMode = fastMode,
         ) {
-            val visibleHeight = with(LocalDensity.current) {
-                (heightPx - layoutOffsetPx).toDp().coerceAtLeast(140.dp)
-            }
-            Box(Modifier.fillMaxWidth().height(visibleHeight)) {
+            // The visible height of the arch content tracks the drag offset. We resolve it in
+            // the measure phase via Modifier.layout (reading layoutOffsetProvider there) so the
+            // height change re-measures only this subtree instead of recomposing the screen.
+            val minContentHeightPx = (140 * density)
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .layout { measurable, constraints ->
+                        val h = (heightPx - layoutOffsetProvider())
+                            .coerceAtLeast(minContentHeightPx)
+                            .roundToInt()
+                        val placeable = measurable.measure(
+                            constraints.copy(minHeight = h, maxHeight = h)
+                        )
+                        layout(placeable.width, placeable.height) {
+                            placeable.place(0, 0)
+                        }
+                    }
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 28.dp)
-                        .graphicsLayer { alpha = pullTabAlpha },
+                        .graphicsLayer { alpha = pullTabAlphaOf(archOffsetProvider()) },
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Box(
@@ -329,7 +375,7 @@ fun CaptureContent(
                     Modifier
                         .fillMaxSize()
                         .imePadding()
-                        .graphicsLayer { alpha = writeContentAlpha }
+                        .graphicsLayer { alpha = writeContentAlphaOf(archOffsetProvider()) }
                         .pointerInput(isActive) {
                             if (!isActive) {
                                 detectTapGestures { onRequestExpand() }
@@ -373,7 +419,11 @@ fun CaptureContent(
                                 .padding(bottom = 64.dp)
                                 .onSizeChanged { textFieldHeight = it.height }
                                 .fadingEdges(
-                                    showFade = { ((localLines > 4) && (archOffsetPx >= normalOffsetPx - 10f)) || ((archOffsetPx <= expandedOffsetPx + 10f) && scrollState.maxValue > 0) },
+                                    showFade = {
+                                        val offset = archOffsetProvider()
+                                        ((localLines > 4) && (offset >= normalOffsetPx - 10f)) ||
+                                            ((offset <= expandedOffsetPx + 10f) && scrollState.maxValue > 0)
+                                    },
                                     showTopFade = scrollState.value > 0,
                                     showBottomFade = scrollState.value < scrollState.maxValue,
                                     fadeHeight = 16.dp
@@ -477,11 +527,12 @@ fun CaptureContent(
                         Spacer(Modifier.weight(1f))
 
                         SaveButton(
-                            enabled = textFieldValue.text.isNotBlank() && writeContentAlpha > 0.1f,
+                            enabled = canSave,
                             fastMode = fastMode,
                             modifier = Modifier.graphicsLayer {
-                                scaleX = writeContentAlpha.coerceAtLeast(0.01f)
-                                scaleY = writeContentAlpha.coerceAtLeast(0.01f)
+                                val a = writeContentAlphaOf(archOffsetProvider()).coerceAtLeast(0.01f)
+                                scaleX = a
+                                scaleY = a
                             },
                             onClick = save,
                         )
