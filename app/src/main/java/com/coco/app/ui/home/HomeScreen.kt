@@ -14,8 +14,10 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -122,11 +124,33 @@ fun HomeScreen(viewModel: HomeViewModel, onComposeReady: () -> Unit = {}) {
         }
     }
 
-    val normalOffset by remember { derivedStateOf { heightPx * 0.42f } }
+    val fontScale = LocalDensity.current.fontScale
+    val imeBottomPx = WindowInsets.ime.getBottom(LocalDensity.current).toFloat()
+
+    val normalOffset by remember {
+        derivedStateOf {
+            val defaultNormal = heightPx * 0.42f
+            if (imeBottomPx > 0f && heightPx > 1f) {
+                val minArchVisibleAboveIme = 230 * density
+                val maxAllowableOffset = heightPx - imeBottomPx - minArchVisibleAboveIme
+                defaultNormal.coerceAtMost(maxAllowableOffset).coerceAtLeast(heightPx * 0.12f)
+            } else {
+                defaultNormal
+            }
+        }
+    }
     val expandedOffset by remember { derivedStateOf { heightPx * 0.12f } }
-    val historyOffset by remember { derivedStateOf { heightPx - (115 * density) } }
+    val historyOffset by remember {
+        derivedStateOf {
+            val peekHeightPx = (96 * density * fontScale.coerceIn(1f, 1.25f)).coerceAtLeast(96 * density)
+            (heightPx - peekHeightPx).coerceAtMost(heightPx * 0.88f)
+        }
+    }
+
+    var isBouncing by remember { mutableStateOf(false) }
 
     fun animateOffsetTo(target: Float, velocity: Float = 0f) {
+        if (isBouncing) return
         scope.launch {
             if (fastMode) {
                 offsetY = target
@@ -146,19 +170,24 @@ fun HomeScreen(viewModel: HomeViewModel, onComposeReady: () -> Unit = {}) {
     fun animateBounce() {
         if (fastMode) return
         scope.launch {
-            val start = offsetY
-            val bouncePeak = (start - (15 * density)).coerceAtLeast(expandedOffset)
-            Animatable(start).animateTo(
-                targetValue = bouncePeak,
-                animationSpec = tween(200, easing = FastOutSlowInEasing)
-            ) { offsetY = value }
-            Animatable(bouncePeak).animateTo(
-                targetValue = normalOffset,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioLowBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            ) { offsetY = value }
+            isBouncing = true
+            try {
+                val start = normalOffset
+                val bouncePeak = (start - (22 * density)).coerceAtLeast(expandedOffset)
+                Animatable(offsetY).animateTo(
+                    targetValue = bouncePeak,
+                    animationSpec = tween(150, easing = FastOutSlowInEasing)
+                ) { offsetY = value }
+                Animatable(bouncePeak).animateTo(
+                    targetValue = normalOffset,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioLowBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ) { offsetY = value }
+            } finally {
+                isBouncing = false
+            }
         }
     }
 
@@ -190,6 +219,15 @@ fun HomeScreen(viewModel: HomeViewModel, onComposeReady: () -> Unit = {}) {
     LaunchedEffect(sharedText, initialized) {
         if (!sharedText.isNullOrBlank() && initialized) {
             animateOffsetTo(normalOffset, -1000f)
+        }
+    }
+
+    LaunchedEffect(normalOffset) {
+        if (initialized) {
+            val progress = ((offsetY - expandedOffset) / (historyOffset - expandedOffset).coerceAtLeast(1f)).coerceIn(0f, 1f)
+            if (progress < 0.5f && offsetY != expandedOffset) {
+                animateOffsetTo(normalOffset)
+            }
         }
     }
 
@@ -250,7 +288,7 @@ fun HomeScreen(viewModel: HomeViewModel, onComposeReady: () -> Unit = {}) {
     }
 
     LaunchedEffect(textLines, textHeight) {
-        if (isCapture) {
+        if (isCapture && !isBouncing) {
             if (textLines >= 8) {
                 if (offsetY > minOffset && Math.abs(offsetY - minOffset) > 1f) {
                     animateOffsetTo(minOffset, 0f)
@@ -285,9 +323,7 @@ fun HomeScreen(viewModel: HomeViewModel, onComposeReady: () -> Unit = {}) {
                 heightPx = h
                 widthPx = w
                 if (!initialized) {
-                    val nOff = h * 0.42f
-                    val hOff = h - (115 * density)
-                    offsetY = if (startInHistory && !quickCaptureTrigger && sharedText == null) hOff else nOff
+                    offsetY = if (startInHistory && !quickCaptureTrigger && sharedText == null) historyOffset else normalOffset
                     initialized = true
                 }
             },

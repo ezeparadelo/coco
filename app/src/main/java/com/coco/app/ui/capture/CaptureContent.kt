@@ -22,9 +22,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -59,6 +61,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -68,6 +71,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coco.app.R
 import com.coco.app.domain.Note
@@ -78,6 +82,7 @@ import com.coco.app.ui.theme.CocoBrownDark
 import com.coco.app.ui.theme.CocoCream
 import com.coco.app.ui.theme.CocoGreen
 import com.coco.app.ui.theme.CocoOnBrown
+import com.coco.app.ui.theme.DynaPuff
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.ui.text.TextRange
@@ -85,6 +90,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.sp
 import com.coco.app.util.MarkdownVisualTransformation
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -173,10 +179,6 @@ fun CaptureContent(
         } else if (!isActive) {
             focusManager.clearFocus(force = true)
             keyboard?.hide()
-            if (editingNote != null) {
-                textFieldValue = TextFieldValue("")
-                onCancelEdit()
-            }
         }
     }
 
@@ -255,7 +257,7 @@ fun CaptureContent(
                     .graphicsLayer {
                         val offset = archOffsetProvider()
                         val hp = historyProgressOf(offset)
-                        alpha = if (hp >= 0.4f) 0f else (1f - hp).coerceIn(0f, 1f)
+                        alpha = (1f - (hp * 1.5f)).coerceIn(0f, 1f)
                         translationY = offset - heightPx + (30 * density)
                     }
                     .background(CocoCream)
@@ -271,7 +273,7 @@ fun CaptureContent(
                         val offset = archOffsetProvider()
                         val hp = historyProgressOf(offset)
                         val ep = expandProgressOf(offset)
-                        alpha = if (hp >= 0.4f) 0f else (1f - (hp * 2.5f) - (ep * 1.5f)).coerceIn(0f, 1f)
+                        alpha = (1f - (hp * 1.5f) - (ep * 1.2f)).coerceIn(0f, 1f)
                         translationY = -ep * 50f
                     }
                     .then(dragModifier),
@@ -280,14 +282,23 @@ fun CaptureContent(
             ) {
                 Text(
                     text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontFamily = DynaPuff,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 45.sp,
+                        letterSpacing = (-1.5).sp,
+                    ),
                     color = CocoBrownDark,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.header_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = CocoBrown,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(Modifier.height(20.dp))
                 Box(
@@ -330,10 +341,12 @@ fun CaptureContent(
                         }
                     }
             ) {
+                val draftText = textFieldValue.text.trim()
+                val hasDraft = draftText.isNotEmpty()
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 28.dp)
+                        .padding(top = 22.dp)
                         .graphicsLayer { alpha = pullTabAlphaOf(archOffsetProvider()) },
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
@@ -344,14 +357,49 @@ fun CaptureContent(
                             .clip(CircleShape)
                             .background(CocoOnBrown.copy(alpha = 0.45f)),
                     )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.pull_tab_write),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = CocoOnBrown.copy(alpha = 0.85f),
-                    )
+                    Spacer(Modifier.height(7.dp))
+                    if (editingNote != null || hasDraft) {
+                        val previewStr = if (editingNote != null) {
+                            stringResource(R.string.pull_tab_editing, draftText.take(22) + if (draftText.length > 22) "…" else "")
+                        } else {
+                            stringResource(R.string.pull_tab_draft, draftText.take(22) + if (draftText.length > 22) "…" else "")
+                        }
+                        Row(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(CocoOnBrown.copy(alpha = 0.16f))
+                                .padding(horizontal = 14.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                Modifier
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(CocoGreen)
+                            )
+                            Spacer(Modifier.width(7.dp))
+                            Text(
+                                text = previewStr,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = CocoOnBrown,
+                                fontWeight = FontWeight.Normal,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = stringResource(R.string.pull_tab_write),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = CocoOnBrown.copy(alpha = 0.85f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
 
+                val imeBottomPx = WindowInsets.ime.getBottom(LocalDensity.current)
+                val topPad = if (imeBottomPx > 0) 72.dp else 104.dp
                 Box(
                     Modifier
                         .fillMaxSize()
@@ -362,7 +410,7 @@ fun CaptureContent(
                                 detectTapGestures { onRequestExpand() }
                             }
                         }
-                        .padding(start = 28.dp, end = 28.dp, top = 88.dp, bottom = 16.dp),
+                        .padding(start = 28.dp, end = 28.dp, top = topPad, bottom = 16.dp),
                 ) {
                     Column(Modifier.fillMaxWidth()) {
                         if (editingNote != null) {
@@ -373,7 +421,11 @@ fun CaptureContent(
                                     .padding(horizontal = 12.dp, vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(stringResource(R.string.editing_mode_hint), style = MaterialTheme.typography.labelSmall, color = CocoOnBrown)
+                                Text(
+                                    stringResource(R.string.editing_mode_hint),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = CocoOnBrown
+                                )
                                 Spacer(Modifier.width(6.dp))
                                 Icon(
                                     Icons.Default.Close,

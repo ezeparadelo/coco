@@ -62,7 +62,7 @@ MainActivity.kt     Immediate splash, edge-to-edge, manual ViewModel factory, Co
    - Swipe right archives the note (brown background with 📦 icon).
    - Single tap expands toolbar to: edit text, change card color (`colorIndex` 0 to 3), or schedule reminder.
    - Long-press on a card pins/unpins it (`combinedClickable` + `onLongClick` with haptics).
-8. **Edit Mode and Dragging**: If a note is in edit mode (`editingNote != null`) in the capture layer and the user drags downward to return to history, the input field clears automatically and the edit cancels to prevent visual bugs.
+8. **Edit Mode and Dragging**: If a note is in edit mode (`editingNote != null`) or has draft text in the capture layer and the user drags downward to view history, the editing/draft state is preserved intact and a sleek indicator badge (`Editando: ...` / `Borrador: ...`) is displayed in the peeking arch.
 9. **Navigation and BackHandler**: In the history view, `BackHandler` intercepts the device Back button to return from archived notes to active notes, or to close the expandable search bar, preventing accidental app exit.
 10. **Runtime Permissions & Notifications**: The notifications and reminders system is temporarily hidden from the UI for visual simplicity, preserving the underlying logic.
 11. **Search via Swipe Down & Swipe Up**: In `HistoryContent`, when at the very top, dragging vertically downward (> 60px) opens the animated search bar. With search open, dragging upward (< -40px) closes search and hides the keyboard.

@@ -3,6 +3,8 @@
     <string name="app_name">Coco</string>
     <string name="header_subtitle">swipe down to see your notes</string>
     <string name="pull_tab_write">swipe up to write</string>
+    <string name="pull_tab_draft">Draft: \"%1$s\"</string>
+    <string name="pull_tab_editing">Editing: \"%1$s\"</string>
     <string name="hint_write_note">Write your note…</string>
     <string name="note_saved">Note saved!</string>
     <string name="your_notes">🌴 Your notes</string>
@@ -41,6 +43,7 @@
     <string name="back_to_active">← Back to active notes</string>
     <string name="edit_note">Edit note</string>
     <string name="editing_mode_hint">Editing note…</string>
+    <string name="clear_draft_hint">Clear draft</string>
     <string name="remind_1h">In 1h</string>
     <string name="remind_tonight">Tonight 8pm</string>
     <string name="remind_tomorrow">Tomorrow 9am</string>
