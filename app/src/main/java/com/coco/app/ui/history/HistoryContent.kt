@@ -59,6 +59,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -154,62 +155,47 @@ fun HistoryContent(
         }
     }
 
-    val nestedScrollConnection = remember(searchQuery, notes) {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (isSearchOpen && (searchQuery.isEmpty() || notes.isEmpty())) {
-                    if (available.y < 0) {
-                        accumulatedUpPush += available.y
-                        if (accumulatedUpPush < -40f) {
-                            onClearFilters()
-                            isSearchOpen = false
-                            keyboard?.hide()
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            accumulatedUpPush = 0f
-                        }
-                    } else if (available.y > 0) {
-                        accumulatedUpPush = 0f
-                    }
-                } else if (!isSearchOpen && !listState.canScrollBackward) {
-                    if (available.y > 0) {
-                        accumulatedPull += available.y
-                        if (accumulatedPull > 50f) {
-                            isSearchOpen = true
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            accumulatedPull = 0f
-                        }
-                    } else if (available.y < 0) {
-                        accumulatedPull = 0f
-                    }
-                } else {
-                    accumulatedPull = 0f
-                }
-                return Offset.Zero
-            }
+    val currentOnClearFilters by rememberUpdatedState(onClearFilters)
+    val currentSearchQuery by rememberUpdatedState(searchQuery)
+    val currentNotesEmpty by rememberUpdatedState(notes.isEmpty())
 
+    val triggerOpenSearch = {
+        if (!isSearchOpen) {
+            isSearchOpen = true
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            accumulatedPull = 0f
+        }
+    }
+
+    val triggerCloseSearch = {
+        if (isSearchOpen) {
+            currentOnClearFilters()
+            isSearchOpen = false
+            keyboard?.hide()
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            accumulatedUpPush = 0f
+        }
+    }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
             override fun onPostScroll(
                 consumed: Offset,
                 available: Offset,
                 source: NestedScrollSource
             ): Offset {
-                if (isSearchOpen && (searchQuery.isEmpty() || notes.isEmpty())) {
+                if (isSearchOpen && (currentSearchQuery.isEmpty() || currentNotesEmpty)) {
                     if (available.y < 0) {
                         accumulatedUpPush += available.y
                         if (accumulatedUpPush < -40f) {
-                            onClearFilters()
-                            isSearchOpen = false
-                            keyboard?.hide()
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            accumulatedUpPush = 0f
+                            triggerCloseSearch()
                         }
                     }
                 } else if (!isSearchOpen && !listState.canScrollBackward) {
                     if (available.y > 0) {
                         accumulatedPull += available.y
                         if (accumulatedPull > 50f) {
-                            isSearchOpen = true
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            accumulatedPull = 0f
+                            triggerOpenSearch()
                         }
                     }
                 }
@@ -286,16 +272,14 @@ fun HistoryContent(
                     }
                 }
             }
-            .pointerInput(isSearchOpen, searchQuery, notes) {
+            .pointerInput(Unit) {
                 detectVerticalDragGestures { _, dragAmount ->
-                    if (isSearchOpen && (searchQuery.isEmpty() || notes.isEmpty()) && dragAmount < -30f) {
-                        onClearFilters()
-                        isSearchOpen = false
-                        keyboard?.hide()
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    } else if (!isSearchOpen && !listState.canScrollBackward && dragAmount > 40f) {
-                        isSearchOpen = true
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    if (!listState.isScrollInProgress) {
+                        if (isSearchOpen && (currentSearchQuery.isEmpty() || currentNotesEmpty) && dragAmount < -30f) {
+                            triggerCloseSearch()
+                        } else if (!isSearchOpen && !listState.canScrollBackward && dragAmount > 40f) {
+                            triggerOpenSearch()
+                        }
                     }
                 }
             }
@@ -612,7 +596,7 @@ fun HistoryContent(
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .fadingEdges(showFade = { listState.canScrollBackward }, showTopFade = true, showBottomFade = false, fadeHeight = 20.dp),
+                        .fadingEdges(showFade = { listState.canScrollBackward }, showTopFade = true, showBottomFade = false, fadeHeight = 20.dp, fadeColor = CocoCream),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 140.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {

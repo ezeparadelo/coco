@@ -34,9 +34,10 @@ import kotlin.math.sin
 fun CocoArch(
     modifier: Modifier = Modifier,
     fastMode: Boolean = false,
+    animateWave: Boolean = !fastMode,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val phase = if (fastMode) {
+    val phase = if (!animateWave || fastMode) {
         0f
     } else {
         val transition = rememberInfiniteTransition(label = "arch")

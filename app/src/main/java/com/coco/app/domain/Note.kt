@@ -21,8 +21,7 @@ data class Note(
     val isDeleted: Boolean = false,
     val deletedAt: Long? = null,
 ) {
-    val hasLinks: Boolean
-        get() = WEB_URL_REGEX.containsMatchIn(content)
+    val hasLinks: Boolean = WEB_URL_REGEX.containsMatchIn(content)
 
     companion object {
         private val WEB_URL_REGEX = Regex("(?i)(https?://|www\\.)\\S+")

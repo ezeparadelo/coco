@@ -51,6 +51,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -245,17 +246,16 @@ fun CaptureContent(
         (1f - (historyProgressOf(offset) * 2.5f)).coerceIn(0f, 1f)
     }
 
-    val showUpperLayers = isActive && (historyProgressOf(archOffsetProvider()) < 0.4f)
-
     Box(modifier.fillMaxSize()) {
-        if (showUpperLayers) {
+        if (isActive) {
             Box(
                 Modifier
                     .fillMaxWidth()
                     .height(with(LocalDensity.current) { heightPx.toDp() })
                     .graphicsLayer {
                         val offset = archOffsetProvider()
-                        alpha = 1f - historyProgressOf(offset)
+                        val hp = historyProgressOf(offset)
+                        alpha = if (hp >= 0.4f) 0f else (1f - hp).coerceIn(0f, 1f)
                         translationY = offset - heightPx + (30 * density)
                     }
                     .background(CocoCream)
@@ -271,7 +271,7 @@ fun CaptureContent(
                         val offset = archOffsetProvider()
                         val hp = historyProgressOf(offset)
                         val ep = expandProgressOf(offset)
-                        alpha = (1f - (hp * 2.5f) - (ep * 1.5f)).coerceIn(0f, 1f)
+                        alpha = if (hp >= 0.4f) 0f else (1f - (hp * 2.5f) - (ep * 1.5f)).coerceIn(0f, 1f)
                         translationY = -ep * 50f
                     }
                     .then(dragModifier),
@@ -311,11 +311,25 @@ fun CaptureContent(
                     }
                 },
             fastMode = fastMode,
+            animateWave = !fastMode,
         ) {
-            val visibleHeight = with(LocalDensity.current) {
-                (heightPx - layoutOffsetProvider()).toDp().coerceAtLeast(140.dp)
-            }
-            Box(Modifier.fillMaxWidth().height(visibleHeight)) {
+            val minVisibleHeightPx = with(LocalDensity.current) { 140.dp.toPx() }
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .layout { measurable, constraints ->
+                        val targetHeight = (heightPx - layoutOffsetProvider()).toInt().coerceAtLeast(minVisibleHeightPx.toInt())
+                        val placeable = measurable.measure(
+                            constraints.copy(
+                                minHeight = targetHeight,
+                                maxHeight = targetHeight
+                            )
+                        )
+                        layout(placeable.width, placeable.height) {
+                            placeable.placeRelative(0, 0)
+                        }
+                    }
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -399,7 +413,7 @@ fun CaptureContent(
                                 .focusRequester(focusRequester),
                             textStyle = MaterialTheme.typography.bodyLarge.copy(color = CocoOnBrown),
                             cursorBrush = SolidColor(CocoGreen),
-                            visualTransformation = MarkdownVisualTransformation(),
+                            visualTransformation = remember { MarkdownVisualTransformation() },
                             onTextLayout = { textLayoutResult ->
                                 textLayoutResultState = textLayoutResult
                                 val lines = textLayoutResult.lineCount
@@ -493,9 +507,8 @@ fun CaptureContent(
 
                         Spacer(Modifier.weight(1f))
 
-                        val currentWriteAlpha = writeContentAlphaOf(archOffsetProvider())
                         SaveButton(
-                            enabled = textFieldValue.text.isNotBlank() && currentWriteAlpha > 0.1f,
+                            enabled = textFieldValue.text.isNotBlank() && isActive,
                             fastMode = fastMode,
                             modifier = Modifier.graphicsLayer {
                                 val a = writeContentAlphaOf(archOffsetProvider()).coerceAtLeast(0.01f)
@@ -551,11 +564,16 @@ fun Modifier.fadingEdges(
     showFade: () -> Boolean,
     showTopFade: Boolean = true,
     showBottomFade: Boolean = true,
-    fadeHeight: androidx.compose.ui.unit.Dp = 16.dp
+    fadeHeight: androidx.compose.ui.unit.Dp = 16.dp,
+    fadeColor: Color = Color.Unspecified,
 ): Modifier = this
-    .graphicsLayer {
-        compositingStrategy = CompositingStrategy.Offscreen
-    }
+    .then(
+        if (fadeColor == Color.Unspecified) {
+            Modifier.graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+        } else {
+            Modifier
+        }
+    )
     .drawWithContent {
         drawContent()
         if (!showFade() || (!showTopFade && !showBottomFade)) return@drawWithContent
@@ -563,27 +581,38 @@ fun Modifier.fadingEdges(
         val fadeHeightPx = fadeHeight.toPx()
         if (fadeHeightPx <= 0f || height <= 0f) return@drawWithContent
         
-        // Draw top fade
+        val isOffscreen = fadeColor == Color.Unspecified
+        val blendMode = if (isOffscreen) BlendMode.DstIn else BlendMode.SrcOver
+        
         if (showTopFade) {
+            val colors = if (isOffscreen) {
+                listOf(Color.Transparent, Color.Black)
+            } else {
+                listOf(fadeColor, fadeColor.copy(alpha = 0f))
+            }
             drawRect(
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, Color.Black),
+                    colors = colors,
                     startY = 0f,
                     endY = fadeHeightPx
                 ),
-                blendMode = BlendMode.DstIn
+                blendMode = blendMode
             )
         }
         
-        // Draw bottom fade
         if (showBottomFade) {
+            val colors = if (isOffscreen) {
+                listOf(Color.Black, Color.Transparent)
+            } else {
+                listOf(fadeColor.copy(alpha = 0f), fadeColor)
+            }
             drawRect(
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color.Black, Color.Transparent),
+                    colors = colors,
                     startY = height - fadeHeightPx,
                     endY = height
                 ),
-                blendMode = BlendMode.DstIn
+                blendMode = blendMode
             )
         }
     }

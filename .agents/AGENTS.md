@@ -38,7 +38,7 @@ MainActivity.kt     Immediate splash, edge-to-edge, manual ViewModel factory, Co
 ```
 
 ## UX Invariants (DO NOT break)
-1. **Animated Splash Screen (1200ms)**: When opening the app, a brown circle (`#5E4130`, 170dp) descends from the center to the bottom and fades out, while the arch rises smoothly and progressively from below (30-100%). Seamless handoff with `AtomicBoolean` in `MainActivity.kt`. See `SPLASH_SCREEN_SPEC.md` for technical details.
+1. **Animated Splash Screen (1200ms)**: When opening the app, a brown circle (`#5E4130`, 170dp) descends from the center to the bottom and fades out, while the arch rises smoothly and progressively from below (30-100%). Seamless handoff with `AtomicBoolean` in `MainActivity.kt`. See `docs/SPLASH_SCREEN_SPEC.md` for technical details.
    - **startInHistory=true**: The arch animates from below up to `historyOffset` (peeking, ready to view notes).
    - **startInHistory=false**: The arch animates from below up to `normalOffset` (writing position).
    - **fastMode=true**: Skips all animations, displays the UI immediately.

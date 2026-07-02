@@ -9,7 +9,9 @@ C:\Users\ezequ\Documents\dev\coco
 ├── .agents/
 │   ├── AGENTS.md                  # Development guidelines, system rules, and UI invariants
 │   ├── CODEBASE.md                # This file (codebase index and package breakdown)
-│   ├── IDENTITY.md                # Brand philosophy, design tokens, and naming conventions
+│   └── IDENTITY.md                # Brand philosophy, design tokens, and naming conventions
+├── docs/
+│   ├── FUTURE_OPTIMIZATIONS.md    # Potential future performance and UX optimizations
 │   └── SPLASH_SCREEN_SPEC.md      # Dual-phase native -> Compose splash transition specification
 ├── app/
 │   ├── build.gradle.kts           # App-level build config (Compose BOM, Room, compileSdk=35)
